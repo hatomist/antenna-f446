@@ -23,6 +23,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32f4xx.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,7 +64,13 @@ extern DMA_HandleTypeDef hdma_uart4_tx;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
-
+extern volatile uint8_t *UART3_RX_recvbuf;
+extern volatile uint8_t *UART3_RX_processbuf;
+extern volatile uint8_t *UART6_RX_recvbuf;
+extern volatile uint8_t *UART6_RX_processbuf;
+extern volatile uint8_t UART3_request_process;
+extern volatile uint8_t UART6_request_process;
+extern const uint8_t UART_RX_BUF_LEN;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -237,6 +244,28 @@ void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
 
+  static int rx_index = 0;
+
+  if (USART3->SR & USART_SR_RXNE)
+  {
+      UART3_RX_recvbuf[rx_index++] = USART3->DR;
+      if (UART3_RX_recvbuf[rx_index-1] == '\n')
+      {
+          UART6_RX_recvbuf[rx_index - 1] = '\0';
+          rx_index = 0;
+          volatile uint8_t *tmp = UART3_RX_recvbuf;
+          UART3_RX_recvbuf = UART3_RX_processbuf;
+          UART3_RX_processbuf = tmp;
+          UART3_request_process = 1;
+      }
+
+      if (rx_index == UART_RX_BUF_LEN)
+          rx_index = 0; // do not handle buffer overflow; NEMA parser would check integrity anyway
+
+//      USART3->SR ^= USART_SR_RXNE; // flag is automatically cleared by read from register
+  }
+
+  return;
   /* USER CODE END USART3_IRQn 0 */
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
@@ -278,7 +307,23 @@ void TIM7_IRQHandler(void)
 void USART6_IRQHandler(void)
 {
   /* USER CODE BEGIN USART6_IRQn 0 */
+    static int rx_index = 0;
 
+    if (USART6->SR & USART_SR_RXNE) {
+        UART6_RX_recvbuf[rx_index++] = USART3->DR;
+        if (UART6_RX_recvbuf[rx_index - 1] == '\n') {
+            UART6_RX_recvbuf[rx_index - 1] = '\0'; // just to be on the safe side (and because parser expects C-string)
+            rx_index = 0;
+            volatile uint8_t *tmp = UART6_RX_recvbuf;
+            UART6_RX_recvbuf = UART6_RX_processbuf;
+            UART6_RX_processbuf = tmp;
+            UART6_request_process = 1;
+        }
+
+        if (rx_index == UART_RX_BUF_LEN)
+            rx_index = 0; // do not handle buffer overflow; NEMA parser would check integrity anyway
+    }
+        return;
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */

@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "nmea0183_decode.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +59,19 @@ UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_uart4_tx;
 
 /* USER CODE BEGIN PV */
+const uint8_t UART_RX_BUF_LEN = 127;
+volatile uint8_t UART3_RX_buffer1[UART_RX_BUF_LEN];
+volatile uint8_t UART3_RX_buffer2[UART_RX_BUF_LEN];
+volatile uint8_t UART6_RX_buffer1[UART_RX_BUF_LEN];
+volatile uint8_t UART6_RX_buffer2[UART_RX_BUF_LEN];
+volatile uint8_t *UART3_RX_recvbuf = UART3_RX_buffer1;
+volatile uint8_t *UART3_RX_processbuf = UART3_RX_buffer2;
+volatile uint8_t *UART6_RX_recvbuf = UART6_RX_buffer1;
+volatile uint8_t *UART6_RX_processbuf = UART6_RX_buffer2;
+volatile uint8_t UART3_request_process = 0;
+volatile uint8_t UART6_request_process = 0;
+volatile NMEAObject *antenna_pos;
+volatile NMEAObject *probe_pos;
 
 /* USER CODE END PV */
 
@@ -77,7 +90,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void process_nmea_sentence(const char* sentence, NMEAObject **object);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -134,12 +147,27 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      if (UART3_request_process)
+      {
+          process_nmea_sentence((const char *)UART3_RX_processbuf, (NMEAObject **)&probe_pos);
+          UART3_request_process = 0;
+      }
+
+      if (UART6_request_process)
+      {
+          process_nmea_sentence((const char *)UART6_RX_processbuf, (NMEAObject **)&antenna_pos);
+          UART6_request_process = 0;
+      }
+
   }
+#pragma clang diagnostic pop
   /* USER CODE END 3 */
 }
 
@@ -668,6 +696,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void process_nmea_sentence(const char* sentence, NMEAObject **object)
+{
+    NMEAObject *new_obj = (NMEAObject *)malloc(sizeof(NMEAObject));
+    NMEA_decode(sentence, new_obj, 1);
+    NMEAObject *tmp = *object;
+    *object = new_obj;
+    NMEA_free_obj(tmp);
+}
 
 /* USER CODE END 4 */
 
