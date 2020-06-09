@@ -70,7 +70,6 @@ extern volatile uint8_t *UART6_RX_recvbuf;
 extern volatile uint8_t *UART6_RX_processbuf;
 extern volatile uint8_t UART3_request_process;
 extern volatile uint8_t UART6_request_process;
-extern const uint8_t UART_RX_BUF_LEN;
 /* USER CODE END EV */
 
 /******************************************************************************/

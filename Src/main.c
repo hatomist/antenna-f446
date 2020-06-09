@@ -59,7 +59,6 @@ UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_uart4_tx;
 
 /* USER CODE BEGIN PV */
-const uint8_t UART_RX_BUF_LEN = 127;
 volatile uint8_t UART3_RX_buffer1[UART_RX_BUF_LEN];
 volatile uint8_t UART3_RX_buffer2[UART_RX_BUF_LEN];
 volatile uint8_t UART6_RX_buffer1[UART_RX_BUF_LEN];
