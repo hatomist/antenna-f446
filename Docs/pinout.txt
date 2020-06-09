@@ -1,0 +1,28 @@
+Nema 17 with DRV8825 driver
+5v logical tolerant
+MODE2, MODE1, MODE0 -- control microstep mode
+0, 0, 0 - full step
+0, 0, 1 - 1/2 step
+0, 1, 0 - 1/4 step
+0, 1, 1 - 8 mksteps
+1, 0, 0 - 16 mksteps
+1, x, x - 32 mksteps (at least one x != 0)
+
+
+DIR -- Low - stepping direction
+STEP -- one step on rising
+
+nFAULT -- low when fault condition (overtemp/overcurrent)
+nHOME -- low when at home state of step table
+
+
+GPS: UART (9600bps default) proto NMEA-0183
+5V tolerant
+
+RFD900+ long range radio modem UART (9600bps default)
+5V tolerant
+
+MPU-9250A I2C interface 3-axis acceleration measurment system
+NON 5V tolerant - up to VDD (3.6 max, 2.5 typical)
+
+

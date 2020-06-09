@@ -1,0 +1,59 @@
+TIM3 - PWM for step motors control
+TIM6 - TIM3 control if channels are active (in - hor and vert rotation)
+TIM7 - data processing interrupt
+TIM3, 6, 7 clock freq - 42 MHz = 42000 kHz
+
+
+let microstep = 1/32
+step freq max -- 250 kHz
+step angle - 1.8 degree
+steps per revolution - 360 / step angle = 200 steps = 6400 microsteps
+let speed = 30 revolutions per minute = 1/2 revo per second
+
+
+TIM3
+obj: generate PWM signal to rotate nema-17 step motor at 30rpm speed
+
+pulses per second (motor freq): spr * speed = 3200 microsteps - 3200 Hz = 3.2 kHz << max freq
+
+TIM3 cycles period = TIM3 freq / motor freq = 42000 / 3.2 = 13125 cycles
+TIM3 prescaler = ceil(cycles period / max_overflow) = 13125 / 0xFF = ceil(0.2) = 1
+TIM3 overflow = ceil(cycles period / prescailer) = 13125 cycles
+TIM3 duty cycle = overflow/2 = 6563 cycles
+
+
+TIM6
+obj: start/stop pwm channels with 1 degree precision
+input: hor_rot [0..180] (float?) and vert_rot [0..180] (float?) which are set in TIM7 interrupt where data from 2 GPS receivers and e-compass processed
+
+in tim6 interrupt:
+
+if hor_rot == 0:
+    tim3.ch_hor.stop()
+else:
+    hor_rot--
+    tim3.ch_hor.start_or_pass()
+
+// same with vertical
+
+TIM6 params:
+1 degree rot = 1 precision / (1.8 degree / 32 mksteps) = 17.(7) mksteps per 1 degree
+TIM6 speed (freq) - motor freq / 1 degree rot = 3200 / 17.(7) = 180 Hz
+
+TIM6 cycles period = TIM6 clock freq / TIM6 speed = 233.(3) ~= 233 333 cycles
+TIM6 prescaler = ceil(cycles period / max_overflow) = 233 / 0xFF = ceil(3.5) = 4
+TIM6 overflow = ceil(cycles period / prescaler) = 58 334
+thus interrupt will be triggered about every 1 degree
+
+
+TIM7
+obj: trigger every 0.5s (from speed) to calculate rotation from actual e-compass and GPS data of antenna and probe.
+
+TIM7 speed (freq) = speed = 0.5 Hz
+
+TIM7 cycles period = TIM7 clock freq / TIM7 speed = 84 000 000 cycles
+TIM7 prescaler = ceil(cycles period / max_overflow) = 1282
+TIM7 overflow = ceil(cycles period / prescaler) = 65 523
+thus interrupt will be triggered about every 0.5 seconds
+
+
