@@ -71,6 +71,7 @@ volatile uint8_t UART3_request_process = 0;
 volatile uint8_t UART6_request_process = 0;
 volatile NMEAObject *antenna_pos;
 volatile NMEAObject *probe_pos;
+volatile uint8_t TIM7_request_pos_adjustment = 0;
 
 /* USER CODE END PV */
 
@@ -90,6 +91,7 @@ static void MX_TIM6_Init(void);
 static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
 static void process_nmea_sentence(const char* sentence, NMEAObject **object);
+static void process_pos_adjustment();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -139,7 +141,7 @@ int main(void)
   MX_TIM6_Init();
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Base_Start(&htim7);
   /* USER CODE END 2 */
  
  
@@ -163,6 +165,12 @@ int main(void)
       {
           process_nmea_sentence((const char *)UART6_RX_processbuf, (NMEAObject **)&antenna_pos);
           UART6_request_process = 0;
+      }
+
+      if (TIM7_request_pos_adjustment)
+      {
+          process_pos_adjustment();
+          TIM7_request_pos_adjustment = 0;
       }
 
   }
@@ -702,6 +710,18 @@ static void process_nmea_sentence(const char* sentence, NMEAObject **object)
     NMEAObject *tmp = *object;
     *object = new_obj;
     NMEA_free_obj(tmp);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == htim7.Instance)
+        TIM7_request_pos_adjustment = 1;
+
+}
+
+static void process_pos_adjustment()
+{
+    // TODO: implement pos adjustment
 }
 
 /* USER CODE END 4 */
