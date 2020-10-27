@@ -1,0 +1,18 @@
+Initialization
+
+Register 0x19 (25) - sample rate divider, 0xFF for 4 Hz samples (and FIFO buf rate)
+Register 0x1A (26) - configuration, 0b00000110, last three bits for 5Hz DLPF # SHOULD SET 200Hz?    
+Register 0x1B (27) - gyroscope configuration, 0x00001000, [4:3] for scale
+Register 0x1C (28) - accelerometer configuration, 0x00010000, [4:3] for scale
+Register 0x1D (29) - accelerometer configuration 2, 0b00000110, last three for 5Hz DLPF # SHOULD SET 200Hz?
+
+Register 0xAA3 - 0xAA6 - 6-Axis Low Power Quaternion Enable
+0x20 0x28 0x30 0x30
+Quaternion format: 16-bit value, each for bits for 4 quarters
+
+Data read
+
+Register 0x73 (115) - number of new bytes in FIFO
+Register 0x74 (116) - FIFO read/write register
+
+Register 0x75 (117) - WHOAMI, defaults to 0x71
