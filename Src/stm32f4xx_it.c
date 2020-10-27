@@ -250,7 +250,7 @@ void USART3_IRQHandler(void)
       UART3_RX_recvbuf[rx_index++] = USART3->DR;
       if (UART3_RX_recvbuf[rx_index-1] == '\n')
       {
-          UART6_RX_recvbuf[rx_index - 1] = '\0';
+          UART3_RX_recvbuf[rx_index - 1] = '\0';
           rx_index = 0;
           volatile uint8_t *tmp = UART3_RX_recvbuf;
           UART3_RX_recvbuf = UART3_RX_processbuf;
